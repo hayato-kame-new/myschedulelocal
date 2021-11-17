@@ -72,15 +72,16 @@ public class MinutesCheckValidator implements ConstraintValidator< MinutesCheck,
 	    	  // メソッドの呼び出し元の値(変数1)が、引数の値(変数2)と同じ場合は”0”
 	    	  // 終了のHourが同じかそれより大きい なおかつ 終了のMinutesが 開始のMinutesと同じ または　小さい時にエラーは出ない trueにする
 	    	  if(endHour.compareTo(startHour) < 0){
-	    		  return true;  // returnしてください、
-	    		  // returnでこのisValidメソッドを即終了させて、他のバリデーションを使うから trueを引数にすればエラーなしとなる
+	    		   return true;  // returnしてください、
+	    		  // result = true;  // 代入だけ
 	    	  }
 	    	  
-	    	  
-	    	  if(endHour.compareTo(startHour) >= 0  &&   endMinute.compareTo(startMinute) >= 0 ) { 
-	    		  result = true;  // 代入だけ
-	    	  }else {
-	    	 
+	    	  // 修正
+	    	  if(endHour == startHour && (endMinute == startMinute || endMinute > startMinute)) {
+	    		  result = true;  // 代入だけ  true だとエラーにならない
+	    	  } else if (endHour > startHour && (endMinute == startMinute || endMinute > startMinute || endMinute < startMinute )) {
+	    		  result = true;
+	    	  } else {
 	    		  // エラーメッセージを出します。エラーメッセージを生成する
 	    		  //メッセージを設定する。エラーメッセージを返すときの手続き
 	    	        context.disableDefaultConstraintViolation();  // まず、デフォルトの制約違反情報をクリアします
@@ -88,6 +89,22 @@ public class MinutesCheckValidator implements ConstraintValidator< MinutesCheck,
 	    	        context.buildConstraintViolationWithTemplate(message).addPropertyNode(this.endMinuteProperty).addConstraintViolation();
 	    		  result = false;  // エラーメッセージを出す。
 	    	  }
+	    	  
+//	    	  if(endHour.compareTo(startHour) >= 0  &&   endMinute.compareTo(startMinute) >= 0 ) { 
+//	    		  result = true;  // 代入だけ
+//	    	  }
+//	    	  // 修正
+//	    	  if(endHour.compareTo(startHour) > 0  && endMinute.compareTo(startMinute) <= 0 ) {
+//	    		  result = true;  // 代入だけ
+//	    	  }  else {
+//	    	 
+//	    		  // エラーメッセージを出します。エラーメッセージを生成する
+//	    		  //メッセージを設定する。エラーメッセージを返すときの手続き
+//	    	        context.disableDefaultConstraintViolation();  // まず、デフォルトの制約違反情報をクリアします
+//	    	        // 今回は終了の分の下にエラーメッセージを表示したいので  addPropertyNode(this.endMinuteProperty) で、Formクラスの　終了の分の名前をセットしてます
+//	    	        context.buildConstraintViolationWithTemplate(message).addPropertyNode(this.endMinuteProperty).addConstraintViolation();
+//	    		  result = false;  // エラーメッセージを出す。
+//	    	  }
 	    	  
 	     }
 	      return result;

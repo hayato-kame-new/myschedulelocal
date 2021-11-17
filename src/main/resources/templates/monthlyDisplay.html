@@ -210,8 +210,10 @@ th:text="${#authentication.principal.authorities}"  権限情報を表示
 			 	 	 		<th:block th:unless="${weekCount == monthly.getWeekCount && day < 22}" >
 				  				 <th:block th:if=" ${monthlyScheduleList.size() != 0}" >
 				  				
-					  				 <th:block th:each="obj : ${monthlyScheduleList}" th:with="a = ${#strings.substring(obj[2], 8, 10)}, b = ${#strings.toString(day)}">
-						  				
+					  				
+					  				 <th:block th:each="obj : ${monthlyScheduleList}" th:with="a = ${#strings.substring(obj[2], 8, 10)}, b = ${#numbers.formatInteger(day, 2)}">
+						  		<!-- 		<p th:text="|${obj[0]}  ${obj[1]} ${obj[2]} ${obj[3]} ${obj[4]} ${obj[5]}  |"></p> -->
+						  				<!-- <p  th:text="|${a} と ${#strings.toString(b)}|" ></p> -->
 					  				  		<th:block th:if="${#strings.equals(a, b)}" > 
 					  				  		<ul>
 					  				  			<li>

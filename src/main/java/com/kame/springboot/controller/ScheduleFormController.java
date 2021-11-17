@@ -133,7 +133,7 @@ public class ScheduleFormController {
 			scheduleForm.setStartHour(startTime.getHour());
 			scheduleForm.setEndHour(endTime.getHour());
 			scheduleForm.setStartMinute(startTime.getMinute());
-			scheduleForm.setStartMinute(endTime.getMinute());
+			scheduleForm.setEndMinute(endTime.getMinute());
 			scheduleForm.setScheduleSubject(scheduleSubject);
 			scheduleForm.setScheduleMemo(scheduleMemo);
 			break; // switch文抜ける
