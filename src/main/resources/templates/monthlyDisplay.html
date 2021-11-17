@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/css/style.css}" rel="stylesheet"/>
+<title th:text="|#{monthDisplay_page.title} - myschedule|"></title>
+<style>
+table {
+  border: 1px solid #a9a9a9;
+  width: 90%;
+  padding: 0px;
+  margin: 0px;
+  border-collapse: collapse;
+}
+.otherMonth {
+ color: #bbb;
+}
+.thisMonth {
+ color: #111;
+}
+
+td {
+  width: 12%;
+  border-top: 1px solid #a9a9a9;
+  border-left: 1px solid #a9a9a9;
+  vertical-align: top;
+  margin: 0px;
+  padding: 2px;
+ /* overflow: scroll; */
+}
+
+td.week {
+  background-color: #FAEBD7;
+  text-align: center;
+}
+td.sunday {
+  background-color: #FF8856;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+}
+td.saturday {
+  background-color: #00acff;
+   color: #fff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.sundayRed {
+	color: red;
+}
+
+.saturdayBlue {
+	color: #0099FF;
+}
+
+td.sche {
+  background-color: #fff;
+  text-align: left;
+  height: 80px;
+  border-top: none;
+  /* 追加 */
+ line-height: 1.1;
+}
+
+p {
+  font-size: 0.75em;
+}
+ul {padding: 0; margin: 0;}
+li {
+  list-style:none;
+}
+.msg {
+  color: orange; font-weight:bold;
+}
+span {color: #333; font-size: 80%;}
+
+.scheduleTime {
+  font-weight:bold;
+}
+
+.scheduleSub {
+	color: darkgreen;
+}
+.schedule span.memo {color:#444; font-weight:normal;}
+.count {
+  font-size: 70%;
+}
+.fontAwesome a {
+  font-size: 120%;
+}
+
+.today {
+border-radius: 50%;
+}
+/* .flashMsg {
+ 	color: skyblue; 
+	border: 1px solid blue;
+	border-radius: 10px;
+	background-color: navy;
+ } */
+ .flashMsg {
+ 	color: skyblue; 
+ }
+
+</style>
+</head>
+<body>
+
+
+<!-- ログイン中のユーザー名を表示するには
+th:text="${#authentication.name}"の振り合いで、ユーザー名を表示することができます
+この機能を使用するには、thymeleaf-extras-springsecurity5 が必要となりますが、
+基本的にはプロジェクトの作成時に、Maven プロジェクト（pom.xml ファイル）に追加されている
+
+なお、現在やり取りをしている プリンシパル（認証主体：principal）を取得することで、
+次のようにユーザー名、パスワード、権限情報を取得することもできます
+th:text="${#authentication.principal.username}"  ユーザー名を表示    ${#authentication.name} でもいい
+th:text="${#authentication.principal.password}"  パスワードを表示
+th:text="${#authentication.principal.authorities}"  権限情報を表示
+ -->
+	
+<!-- ?以降のクエリー文字列の書き方 --><!-- <div th:text="'ユーザ名: ' + ${#authentication.principal.username}"></div>
+	<div th:text="'パスワード: ' +${#authentication.principal.password}"></div>
+	<div th:text="'権限: ' +${#authentication.principal.authorities}"></div> -->
+
+     <!-- ${#authentication.name}   ${#authentication.principal.username} -->
+    <p style="text-align:right" th:text="'ユーザーID: ' + ${#authentication.principal.id} + '  ユーザ名: '+ ${#authentication.principal.username} + 'さん'"></p>
+
+    <hr />
+<!--  ブラウザでの表示は   
+	<a href="/monthly?display=beforeMonth&amp;year=2021&amp;month=11">&lt;&lt;前の月へ</a> &lang;
+	<a href="/monthly?display=afterMonth&amp;year=2021&amp;month=11">次の月へ&gt;&gt;</a><br /> 
+	
+    <form action="/logout" method="post" ><input type="hidden" name="_csrf" value="3d16ff07-39c9-4f13-a8c7-0dd978d774bd"/>
+        <input type="submit" value="ログアウト" />
+    </form>
+ -->
+
+    
+  <p style="text-align:right" th:text="'現在時刻: ' + ${#dates.format(new java.util.Date(), 'yyyy/MM/dd HH:mm')} "></p>   
+	<a th:href="@{/monthly(display=beforeMonth, year=${year}, month=${month} )}">&lt;&lt;前の月へ</a> &lang;
+	<a th:href="@{/monthly(display=afterMonth, year=${year}, month=${month} )}">次の月へ&gt;&gt;</a><br /> 
+	<th:block th:unless="${monthly.getYear() == localdateToday.getYear() && monthly.getMonth() == localdateToday.getMonthValue()  }">
+		<a th:href="@{/monthly(display=currentMonth)}">今月へ戻る</a> 
+	</th:block>
+    <form th:action="@{/logout}" method="post" >
+        <input type="submit" value="ログアウト" />
+    </form>
+    
+    <h3 >[[${year}]]  年 [[${month}]] 月のカレンダー</h3>
+    <p th:if="${flashMsg != null}" th:text="${flashMsg}" class="flashMsg">
+<table>
+    <tr>
+      <td class="week sunday">日</td>
+      <td class="week">月</td>
+      <td class="week">火</td>
+      <td class="week">水</td>
+      <td class="week">木</td>
+      <td class="week">金</td>
+      <td class="week saturday">土</td>
+    </tr>
+  <!-- 
+    weekMap はこのような中身になっています
+  {1=[31, 1, 2, 3, 4, 5, 6], 2=[7, 8, 9, 10, 11, 12, 13], 3=[14, 15, 16, 17, 18, 19, 20], 4=[21, 22, 23, 24, 25, 26, 27], 5=[28, 29, 30, 1, 2, 3, 4], 6=[0, 0, 0, 0, 0, 0, 0]} 
+  -->
+    <th:block th:each="element : ${weekMap}" >
+  		<th:block th:with="week = ${element.value}, weekCount = ${element.key }" >
+			 <tr >			 	
+  				<th:block th:each="day : ${week}" > 
+					<!-- 注意 th:inline="text" にしないといけない そうしないと中のth:blockが効かない -->
+					<!-- 今月の日付じゃないものは、薄い表示とする -->
+
+				 	<td  th:if="${day} != 0"  th:inline="text">
+						<th:block th:if="${weekCount == 1 && day > 7 || weekCount == 5 && day < 22  || weekCount == 6 && day < 22}" >
+					 		<span class="otherMonth ">[[${day}]]</span>
+						</th:block>					 		
+						<th:block th:unless="${weekCount == 1 && day > 7 || weekCount == 5 && day < 22  || weekCount == 6 && day < 22}" >
+					 		<!-- さらに、日曜日は赤に土曜日は青で日付の文字を表示 -->
+					 		<th:block  th:if="${element.value.get(0)  == day}">
+					 			<span class="thisMonth sundayRed">[[${day}]]</span>
+					 		</th:block>
+					 		<th:block  th:if="${element.value.get(6)  == day}">
+					 			<span class="thisMonth saturdayBlue">[[${day}]]</span>
+					 		</th:block>
+					 		<th:block th:unless="${element.value.get(0)  == day || element.value.get(6)  == day}">
+					 			<span class="thisMonth ">[[${day}]]</span>
+					 		</th:block>
+						</th:block>	
+
+				 		<!-- 今月だったら Font Awesomeのデザインをつけてリンクにし、さらに本日なら赤丸をつける -->
+			  			<th:block th:unless="${weekCount == 1 && day > 7}" >
+			 	 	 		<th:block th:unless="${weekCount == monthly.getWeekCount && day < 22}" >
+				  				<a th:href="@{/formDisplay(action=add, year=${year}, month=${month}, day=${day})}">
+								        <i class="fas fa-clipboard-list"></i>
+								</a>
+							    <th:block th:if="${monthly.getYear() == localdateToday.getYear() && monthly.getMonth() == localdateToday.getMonthValue() && day == localdateToday.getDayOfMonth() }" >
+							  		<!--  今日に赤い印をつけてる -->
+							   		&nbsp;<img class="today" th:src="@{/images/IMG_1044.JPG}" width="15" height="15" >
+							    </th:block>
+						    </th:block>
+				 		</th:block>
+				 	</td>
+		  		</th:block>
+			 </tr>
+			 <tr>
+		 	 <th:block th:each="day : ${week}" >			 	 	
+			 	 	<td class="sche"  th:if="${day} != 0" th:inline="text">
+			 	 	 	<th:block th:unless="${weekCount == 1 && day > 7}" >
+			 	 	 		<th:block th:unless="${weekCount == monthly.getWeekCount && day < 22}" >
+				  				 <th:block th:if=" ${monthlyScheduleList.size() != 0}" >
+				  				
+					  				 <th:block th:each="obj : ${monthlyScheduleList}" th:with="a = ${#strings.substring(obj[2], 8, 10)}, b = ${#strings.toString(day)}">
+						  				
+					  				  		<th:block th:if="${#strings.equals(a, b)}" > 
+					  				  		<ul>
+					  				  			<li>
+						  				  			<a th:href="@{/formDisplay(action=edit,  year=${year}, month=${month}, day=${day}, id=${obj[0]} )}">
+											           <small class="scheduleTime" th:inline="text">
+											           		&#x005B;[[${#strings.substring(obj[3], 0, 5)}]]-[[${#strings.substring(obj[4], 0, 5)}]]&#x005D;
+									           			</small>
+									           			<span class="scheduleSub" th:if="${10 <= #strings.length(obj[5])}" th:inline="text">
+														[[${#strings.substring(obj[5],0,9)}]]...
+									           			</span>
+														<span class="scheduleSub" th:unless="${10 <= #strings.length(obj[5])}"  th:inline="text">
+														[[${obj[5]}]]</span>					  				  			
+						  				  			</a>       
+					  				  			</li>
+					  				  		</ul>
+					  					</th:block>
+					  				 </th:block>
+					  				 
+				  				 </th:block>					  				
+						    </th:block>
+				 		</th:block>				 	 	 
+			 	 	 </td>
+			 	</th:block>
+			 </tr>
+			 
+     	</th:block>
+     </th:block>
+    
+</table>
+
+ <!-- Font Awesomeのための -->
+  <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"></script>
+</body>
+</html>

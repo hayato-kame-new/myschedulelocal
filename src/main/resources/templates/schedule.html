@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/css/style.css}" rel="stylesheet"/>
+<title th:text="#{schedule_page.title}"></title>
+<style>
+p {
+  font-size: 0.75em;
+}
+table.sche{border:1px solid #a9a9a9;padding:0px;margin:0px;border-collapse:collapse;}
+td{vertical-align:top;margin:0px;padding:2px;font-size:0.75em;height:20px;}
+td.top{border-bottom:1px solid #a9a9a9;text-align:center;}
+td.time{background-color:#f0f8ff;text-align:right;border-bottom:1px solid #a9a9a9;border-right:1px double #a9a9a9;padding-right:5px;}
+
+td.contents{background-color:#ffffff;border-bottom:1px solid #a9a9a9;}
+
+td.ex{background-color:#ffebcd;border:1px solid #8b0000;}
+img{border:0px;}
+p{font-size:0.75em;}
+
+#contents{margin:0;padding:0;width:1024px; }
+#left{margin:0;padding:0;float:left;width:570px;}
+#right{margin:0;padding:0;float:right;width:420px;background-color:#ffffff;}
+#contents:after{content:".";display:block;height:0;clear:both;visibility:hidden;}
+#contents span {color: darkgreen; font-weight:bold;}
+
+#contents span.memo {color:#444; font-weight:normal;}
+ul {
+  list-style: none;
+  padding:0;
+  margin:0;
+}
+.err {
+	color:red;
+	margin-bottom:5px;
+}
+</style>
+<script src="../js/jquery-3.6.0.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+   <!-- ${#authentication.name}   ${#authentication.principal.username} -->
+    <p style="text-align:right" th:text="'ユーザーID: ' + ${#authentication.principal.id} + '  ユーザ名: '+ ${#authentication.principal.username} + 'さん'"></p>
+<hr />
+<p style="text-align:right" th:text="'現在時刻: ' + ${#dates.format(new java.util.Date(), 'yyyy/MM/dd HH:mm')} "></p>   
+<div>
+	<a th:href="@{/monthly(display=return, year=${year}, month=${month} )}" th:inline="text">前のページ( [[${year}]]  年 [[${month}]] 月 )の表示へ戻る</a>
+</div>
+<div>
+	<form th:action="@{/logout}" method="post" >
+	        <input type="submit" value="ログアウト" />
+	</form>
+</div>
+
+<h2 th:inline="text">[[${year}]]年 [[${month}]]月 [[${day}]]日のタイムスケジュール</h2>
+<!--  こっちの書き方でもOK
+<h2 th:text="|${year}年 ${month}月 ${day}日のタイムスケジュール|"></h2>  -->
+
+<div id="contents">
+
+	<div id="left">
+		<table class="sche">		
+			<tr>
+				<td class="top" style="width:100px">時刻</td><td class="top" style="width:400px">予定</td>
+			</tr>
+			
+			<th:block th:each="time : ${timeList}" >
+				<tr >
+					<td class="time" th:text="${time}"></td>
+					<td class="contents">
+						<th:block th:if=" ${oneDayScheduleList.size() != 0}" >
+							<th:block th:each="obj : ${oneDayScheduleList}" th:with="a = ${#strings.substring(obj[3], 0, 5)}, b = ${#strings.toString(time)}">
+								<th:block th:if="${#strings.equals(a, b)}"  >
+									<ul>
+			  				  			<li>      
+										<a th:href="@{/formDisplay(action=edit, id=${obj[0]}, year=${#strings.substring(obj[2], 0, 4)}, month=${#strings.substring(obj[2], 5, 7)}, day=${#strings.substring(obj[2], 8)})}"> 
+									           <small class="schedule" th:inline="text">
+									           		&#x005B;[[${#strings.substring(obj[3], 0, 5)}]]-[[${#strings.substring(obj[4], 0, 5)}]]&#x005D;
+							           			</small>
+							           			<span th:if="${10 <= #strings.length(obj[5])}" th:inline="text">
+												[[${#strings.substring(obj[5],0,9)}]]...
+							           			</span>
+												<span th:unless="${10 <= #strings.length(obj[5])}"  th:inline="text">
+												[[${obj[5]}]]
+												</span>
+												<small>メモ:</small>
+												<span class="memo" th:if="${10 <= #strings.length(obj[6])}" th:inline="text">
+												[[${#strings.substring(obj[6],0,9)}]]...
+							           			</span>
+												<span class="memo" th:unless="${10 <= #strings.length(obj[6])}"  th:inline="text">
+												[[${obj[6]}]]
+												</span>			  				  			
+			  				  				 </a> 
+			  				  			</li>
+			  				  		</ul>
+								</th:block>
+							</th:block>	
+						</th:block>			
+					</td>
+				</tr>
+			</th:block>		
+		</table>	
+	</div>
+	
+	<div id="right">	
+		<p th:if="${flashMsg}" th:text="${flashMsg}"></p>
+		<h3 th:if="${action.equals('add') }" th:inline="text">スケジュール新規登録フォーム</h3> 
+		<h3 th:if="${action.equals('edit') }" th:inline="text">スケジュール編集フォーム</h3> 
+		
+		<form method="post" th:action="@{/schedule}" th:object="${scheduleForm}">
+			 <input type="hidden" name="action" th:value="${action}" />
+			 <!-- 編集と削除の時には idある -->
+			  <input type="hidden" name="id" th:value="*{id}" />
+			 <input type="hidden" name="userId" th:value="*{userId}" />
+			 <ul>
+			 	<li th:each="error : ${#fields.detailedErrors()}" class="err" th:text="|※ ${error.message}|" />
+			 </ul>
+		
+			<table>
+				<tr>
+					<td nowrap style="width:40px">日付</td>
+					<td style="width:300px">
+						<select style="width:80px" name="year" class="js-changeYear" th:errorclass="err">
+							<option th:each="y : ${yearList}" th:value="${y}" th:selected="${y == scheduleForm.year}" th:inline="text">
+								[[${y}]]年
+							</option>
+						</select>
+				<!-- 		<p th:if="${#fields.hasErrors('year')}" th:errors="*{year}" th:errorclass="err"> </p> -->
+					  
+					  	<select style="width:80px" name="month" class="js-changeMonth" th:errorclass="err">
+					  		<option th:each="i : ${#numbers.sequence(1,12)}" th:value="${i}" th:selected="${i == scheduleForm.month}" th:inline="text">
+					  			[[${i}]]月
+					  		</option>
+					  	</select>
+					<!--   	<p th:if="${#fields.hasErrors('month')}" th:errors="*{month}" th:errorclass="err"> </p> -->
+					  	
+					  	 <select style="width:80px" name="day" class="js-changeDay" th:errorclass="err"> 
+					  	 	<option th:each="i : ${#numbers.sequence(1,31)}" th:value="${i}" th:selected="${i == scheduleForm.day}" th:inline="text">
+					  			[[${i}]]日
+					  		</option> 	 
+					  	 </select>
+					<!--   	 <p th:if="${#fields.hasErrors('day')}" th:errors="*{day}" th:errorclass="err"> </p> -->
+					</td>
+				</tr>
+				<tr>
+					<td nowrap>時刻</td>
+					<td>
+						<select style="width:70px" name="startHour" th:errorclass="err">
+							 <option disabled value="" >--時</option>
+							 <option th:each="i : ${#numbers.sequence(0,23)}" th:value="${i}" th:selected="${i == scheduleForm.startHour}" th:inline="text">
+					  			[[${i}]]時
+					  		</option> 	 
+						</select>
+					<!-- 	<p th:if="${#fields.hasErrors('startHour')}" th:errors="*{startHour}" th:errorclass="err"> </p> -->
+					
+						<select style="width:70px" name="startMinute" th:errorclass="err">
+							 <option disabled value="" >--分</option>
+							 <option th:each="s_m : ${minuteList}" th:value="${s_m}" th:selected="${s_m == scheduleForm.startMinute}" th:inline="text">
+					  			[[${s_m}]]分
+					  		 </option> 	 
+						</select>
+				<!-- 		<p th:if="${#fields.hasErrors('startMinute')}" th:errors="*{startMinute}" th:errorclass="err"> </p> -->
+						&nbsp;&#126;&nbsp;
+						<select style="width:70px" name="endHour" th:errorclass="err">
+							 <option disabled value="" >--時</option>
+							 <option th:each="i : ${#numbers.sequence(0,23)}" th:value="${i}" th:selected="${i == scheduleForm.endHour}" th:inline="text">
+					  			[[${i}]]時
+					  		</option> 	 
+						</select>
+					<!-- 	<p th:if="${#fields.hasErrors('endHour')}" th:errors="*{endHour}" th:errorclass="err"> </p> -->
+					
+						<select style="width:70px" name="endMinute" th:errorclass="err">
+							 <option disabled value="" >--分</option>
+							 <option th:each="e_m : ${minuteList}" th:value="${e_m}" th:selected="${e_m == scheduleForm.endMinute}" th:inline="text">
+					  			[[${e_m}]]分
+					  		 </option> 	 
+						</select>
+					<!-- 	<p th:if="${#fields.hasErrors('endMinute')}" th:errors="*{endMinute}" th:errorclass="err"> </p> -->
+					</td>
+				</tr>
+								
+				 <tr>
+				    <td nowrap>件名</td>
+				    <td>
+				    	<input type="text" name="scheduleSubject" th:value="*{scheduleSubject}" size="42" maxlength="70" th:errorclass="err">
+				 <!--    	<p th:if="${#fields.hasErrors('scheduleSubject')}" th:errors="*{scheduleSubject}" th:errorclass="err"></p> -->
+				    </td>
+				 </tr>
+				
+				 <tr>
+				    <td valign="top" nowrap>メモ</td>
+				    <td>
+				    <!-- 注意textareaの中には改行もインデントも入れないようにしてください内部のテキストと解釈され、表示がおかしくなる -->
+				    	<textarea name="scheduleMemo" cols="42" rows="8" wrap="soft" th:inline="text"  th:errorclass="err">[[*{scheduleMemo}]]</textarea>
+				<!--     	<p th:if="${#fields.hasErrors('scheduleMemo')}" th:errors="*{scheduleMemo}" th:errorclass="err"></p> -->
+			    	</td>
+				 </tr>			
+			</table>
+			<p>
+			<th:block th:unless="${action.equals('delete') }">
+			    <input type="submit" name="Register" value="送信">
+			    <input type="reset" value="キャンセル">
+		    </th:block>
+		  	<p>		
+		</form>
+		
+		<!-- 削除のフォーム -->
+		<th:block th:unless="${action.equals('add') }">
+			<form method="post" th:action="@{/scheduleDelete}" th:object="${scheduleForm}" onsubmit="return beforeSubmit()">
+			   
+			    <!-- 削除では、主キーの値が必要 -->
+			 <input type="hidden" name="id" th:value="*{id}" />
+			<input type="hidden" name="year" th:value="*{year}" />
+			<input type="hidden" name="month" th:value="*{month}" /> 
+			    <input type="submit" value="削除"  />
+			</form>
+		</th:block>
+	</div>
+</div>
+
+ <!-- Font Awesomeのための -->
+<script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"></script>
+<script>
+
+(function($){
+    function formSetDay(){
+      var lastday = formSetLastDay($('.js-changeYear').val(), $('.js-changeMonth').val());
+      var option = '';
+      for (var i = 1; i <= lastday; i++) {
+        if (i === $('.js-changeDay').val()){
+          option += '<option value="' + i + '" selected="selected">' + i + '</option>\n';
+        }else{
+          option += '<option value="' + i + '">' + i + '</option>\n';
+        }
+      }
+      $('.js-changeDay').html(option);
+    }
+
+    function formSetLastDay(year, month){
+      var lastday = new Array('', 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+      if ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0){
+        lastday[2] = 29;
+      }
+      return lastday[month];
+    }
+
+    $('.js-changeYear, .js-changeMonth').change(function(){
+      formSetDay();
+    });
+  })(jQuery);
+</script>
+
+<script>
+function beforeSubmit() {
+    if(window.confirm('本当に削除しますか？')) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+</script>
+
+</body>
+</html>

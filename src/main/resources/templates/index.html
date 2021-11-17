@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/css/style.css}" rel="stylesheet"/>
+<title th:text="|#{top_page.title} - myschedule|"></title>
+<style>
+
+p {
+  font-size: 0.75em;
+}
+</style>
+</head>
+<body>
+    <p style="text-align:right" th:text="'ユーザーID: ' + ${#authentication.principal.id} + '  ユーザ名: '+ ${#authentication.principal.username} + 'さん'"></p>
+
+    <hr />
+     <p style="text-align:right" th:text="'現在時刻: ' + ${#dates.format(new java.util.Date(), 'yyyy/MM/dd HH:mm')} "></p>   
+    
+<h2 th:text="'ようこそ ' + ${#authentication.principal.username} + ' さんのスケジュール帳へ'"></h2>
+<!-- ログイン中のユーザー名を表示するには
+th:text="${#authentication.name}"の振り合いで、ユーザー名を表示することができます
+この機能を使用するには、thymeleaf-extras-springsecurity5 が必要となりますが、
+基本的にはプロジェクトの作成時に、Maven プロジェクト（pom.xml ファイル）に追加されている
+
+なお、現在やり取りをしている プリンシパル（認証主体：principal）を取得することで、
+次のようにユーザー名、パスワード、権限情報を取得することもできます   ${#authentication.name}   ${#authentication.principal.username}
+th:text="${#authentication.principal.username}"  ユーザー名を表示 ${#authentication.name}でもいい
+th:text="${#authentication.principal.password}"  パスワードを表示   ${#authentication.principal.id}
+th:text="${#authentication.principal.authorities}"  権限情報を表示
+カラムを追加したので  th:text="${#authentication.principal.email}"  これでメールアドレスも取得できます
+ th:text="'ユーザID: ' + ${#authentication.principal.id} "  これでidも取れる
+ -->
+<!-- <div th:text="'ユーザ名: ' + ${#authentication.principal.username}"></div>
+<div th:text="'パスワード: ' +${#authentication.principal.password}"></div>
+<div th:text="'権限: ' +${#authentication.principal.authorities}"></div> -->
+
+<!-- <div th:text="'メールアドレス: ' +${#authentication.principal.email}"></div> -->
+	
+	<div>
+		<a th:href="@{/monthly(display=currentMonth)}">今月の[[${#authentication.name}]]さんのスケジュール表示</a><br />
+	</div>
+	
+	<!-- <div>
+		<a th:href="@{/monthly(display=currentMonth)}">[[${#authentication.name}]]さんのユーザ情報編集</a><br />
+	</div> -->
+	
+
+	<div>
+	    <form th:action="@{/logout}" method="post">
+	        <input type="submit" value="ログアウト" />
+	    </form>
+    </div>
+
+</body>
+</html>
